@@ -1,0 +1,137 @@
+:root {
+  color-scheme: light;
+  --ink: #17202a;
+  --muted: #657282;
+  --line: #d8e0e8;
+  --surface: #ffffff;
+  --page: #f4f6f8;
+  --accent: #176b52;
+  --accent-dark: #0f513e;
+  --danger: #a33a32;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  font-family: Arial, Helvetica, sans-serif;
+  color: var(--ink);
+  background: var(--page);
+}
+
+.app-shell {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+}
+
+.expense-panel {
+  width: min(100%, 460px);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 24px;
+  box-shadow: 0 14px 34px rgba(23, 32, 42, 0.08);
+}
+
+.brand-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--muted);
+  font-size: 14px;
+  font-weight: 700;
+  margin-bottom: 18px;
+}
+
+.mark {
+  width: 30px;
+  height: 30px;
+  display: grid;
+  place-items: center;
+  border-radius: 6px;
+  color: #fff;
+  background: var(--accent);
+}
+
+h1 {
+  margin: 0 0 22px;
+  font-size: 30px;
+  line-height: 1.15;
+  letter-spacing: 0;
+}
+
+.form {
+  display: grid;
+  gap: 16px;
+}
+
+label {
+  display: grid;
+  gap: 7px;
+  font-size: 15px;
+  font-weight: 700;
+}
+
+input,
+textarea,
+select {
+  width: 100%;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 14px;
+  color: var(--ink);
+  font: inherit;
+  font-size: 18px;
+  font-weight: 400;
+  background: #fff;
+}
+
+textarea {
+  resize: vertical;
+  min-height: 94px;
+}
+
+input:focus,
+textarea:focus,
+select:focus {
+  outline: 3px solid rgba(23, 107, 82, 0.18);
+  border-color: var(--accent);
+}
+
+button {
+  min-height: 50px;
+  border: 0;
+  border-radius: 6px;
+  color: #fff;
+  background: var(--accent);
+  font: inherit;
+  font-size: 18px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+button:hover { background: var(--accent-dark); }
+button:disabled { opacity: 0.68; cursor: progress; }
+
+.preview {
+  min-height: 22px;
+  margin-top: 16px;
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 1.35;
+}
+
+.status {
+  min-height: 24px;
+  margin-top: 14px;
+  color: var(--muted);
+  font-size: 15px;
+  font-weight: 700;
+  line-height: 1.4;
+}
+
+.status.error { color: var(--danger); }
+.status.ok { color: var(--accent-dark); }
