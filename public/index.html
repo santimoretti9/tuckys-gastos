@@ -4,6 +4,39 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Cargar gasto Tuckys</title>
+    <meta name="theme-color" content="#176b52">
+    <link rel="stylesheet" href="/styles.css">
+  </head>
+  <body>
+    <main class="app-shell">
+      <section class="expense-panel" aria-labelledby="title">
+        <div class="brand-row"><span class="mark">T</span><span>Tuckys</span></div>
+        <div class="page-heading">
+          <p>Carga directa</p>
+          <h1 id="title">Cargar gasto</h1>
+        </div>
+        <p class="helper-text">Selecciona mes, categoria y gasto. El importe se suma directo en la celda real del Sheets.</p>
+        <form id="expense-form" class="form">
+          <label id="access-code-field" hidden><span>Codigo de acceso</span><input id="codigo_acceso" name="codigo_acceso" autocomplete="off"></label>
+          <label><span>Importe</span><input id="importe" name="importe" inputmode="decimal" autocomplete="off" placeholder="45000" required></label>
+          <label><span>MES</span><select id="mes_columna" name="mes_columna" required></select></label>
+          <label><span>Categoria</span><select id="categoria" name="categoria" required></select></label>
+          <label><span>Gasto</span><select id="concepto" name="concepto" required></select></label>
+          <button id="submit-button" type="submit">Enviar gasto</button>
+        </form>
+        <div id="preview" class="preview" aria-live="polite">Selecciona los datos para ver el destino antes de enviar.</div>
+        <div id="status" class="status" role="status" aria-live="polite"></div>
+      </section>
+    </main>
+    <script src="/app.js"></script>
+  </body>
+</html>
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Cargar gasto Tuckys</title>
     <link rel="stylesheet" href="/styles.css">
   </head>
   <body>
