@@ -9,6 +9,8 @@ const PUBLIC_DIR = join(ROOT_DIR, 'public');
 const MAIN_SHEET_NAME = 'Cash-25 Tuckys';
 const LOG_SHEET_NAME = 'Carga Gastos Web';
 const LOG_HEADERS = ['ID', 'Cargado el', 'Fecha gasto', 'Persona', 'Categoria', 'Concepto', 'Mes', 'Columna', 'Fila', 'Importe', 'Descripcion', 'Valor anterior', 'Valor nuevo', 'Destino', 'Estado'];
+const RECEIPTS_SHEET_NAME = 'Comprobantes';
+const RECEIPT_CHUNK_SIZE = 45000;
 
 const MONTHS = [
   {
@@ -351,7 +353,11 @@ createServer(async (req, res) => {
     const url = new URL(req.url, 'http://' + req.headers.host);
     if (req.method === 'GET' && url.pathname === '/api/catalogo') return sendJson(res, 200, { months: MONTHS, concepts: CONCEPTS });
     if (req.method === 'GET' && url.pathname === '/api/config') return sendJson(res, 200, { accessCodeRequired: Boolean(accessCode) });
+    if (req.method === 'GET' && url.pathname === '/api/historial') return sendJson(res, 200, await listHistory());
+    if (req.method === 'GET' && url.pathname === '/api/historial-comprobantes') return sendJson(res, 200, await listReceiptHistory());
+    if (req.method === 'GET' && url.pathname === '/api/comprobantes/archivo') return sendReceiptFile(res, url.searchParams.get('id'));
     if (req.method === 'POST' && url.pathname === '/api/gastos') return sendJson(res, 201, await createExpense(await readJson(req)));
+    if (req.method === 'POST' && url.pathname === '/api/comprobantes') return sendJson(res, 201, await createReceipt(await readJson(req)));
     if (req.method === 'GET') return serveStatic(res, url.pathname);
     sendJson(res, 404, { error: 'No encontrado' });
   } catch (error) {
@@ -386,6 +392,8 @@ async function createExpense(body) {
   const newValue = previousValue + amount;
 
   await updateValues(targetRange, [[newValue]]);
+  const receiptDescription = String(body.descripcion_comprobante || '').trim() || concept.concept + ' - ' + month.label;
+  const receiptResult = await saveReceiptFromBody(body, persona, amount, receiptDescription, false);
   await appendValues("'" + LOG_SHEET_NAME + "'!A1:O", [[
     id,
     now,
@@ -414,6 +422,129 @@ async function createExpense(body) {
     destino: MAIN_SHEET_NAME + '!' + month.column + concept.row,
     valorAnterior: previousValue,
     valorNuevo: newValue,
+    comprobante: receiptResult,
+  };
+}
+
+async function listHistory() {
+  try {
+    const rows = await getValues("'" + LOG_SHEET_NAME + "'!A2:O", 'UNFORMATTED_VALUE');
+    return rows
+      .map((row, index) => expenseFromRow(row, index + 2))
+      .filter((expense) => expense.id)
+      .reverse()
+      .slice(0, 50);
+  } catch (error) {
+    if (String(error.message || '').includes('Unable to parse range')) return [];
+    throw error;
+  }
+}
+
+async function createReceipt(body) {
+  validateAccessCode(body.codigo_acceso);
+  return saveReceiptFromBody(body, String(body.persona || 'Mama').trim(), parseAmount(body.importe), String(body.descripcion || '').trim(), true);
+}
+
+async function saveReceiptFromBody(body, person, amount, description, required) {
+  const fileName = String(body.archivo_nombre || '').trim();
+  const fileType = String(body.archivo_tipo || '').trim() || 'application/octet-stream';
+  const fileSize = Number(body.archivo_tamano || 0);
+  const fileBase64 = String(body.archivo_base64 || '').trim();
+
+  if (!fileName && !fileBase64 && !required) return null;
+  if (!person) throw validationError('Persona requerida');
+  if (!fileName || !fileBase64) throw validationError('Falta el archivo del comprobante');
+  if (fileSize > 1500000 || fileBase64.length > 2100000) throw validationError('El archivo es muy grande');
+
+  await ensureReceiptsSheet();
+  const id = 'COMP-' + Date.now();
+  const now = new Date().toISOString();
+  const chunks = chunkText(fileBase64, RECEIPT_CHUNK_SIZE);
+  await appendValues("'" + RECEIPTS_SHEET_NAME + "'!A1:Z", [[
+    id,
+    now,
+    person,
+    amount || '',
+    description,
+    fileName,
+    fileType,
+    fileSize || '',
+    chunks.length,
+    ...chunks,
+  ]]);
+
+  return { id, estado: 'guardado', archivo: fileName, partes: chunks.length };
+}
+
+async function listReceiptHistory() {
+  try {
+    const rows = await getValues("'" + RECEIPTS_SHEET_NAME + "'!A2:I", 'UNFORMATTED_VALUE');
+    return rows
+      .map(receiptFromRow)
+      .filter((receipt) => receipt.id)
+      .reverse()
+      .slice(0, 50);
+  } catch (error) {
+    if (String(error.message || '').includes('Unable to parse range')) return [];
+    throw error;
+  }
+}
+
+async function sendReceiptFile(res, id) {
+  const normalizedId = String(id || '').trim();
+  if (!normalizedId) throw validationError('Falta el comprobante');
+
+  const rows = await getValues("'" + RECEIPTS_SHEET_NAME + "'!A2:Z");
+  const row = rows.find((item) => item[0] === normalizedId);
+  if (!row) throw validationError('No encontre ese comprobante');
+
+  const fileName = String(row[5] || 'comprobante');
+  const fileType = String(row[6] || 'application/octet-stream');
+  const fileBase64 = row.slice(9).join('');
+  const fileBuffer = Buffer.from(fileBase64, 'base64');
+
+  res.writeHead(200, {
+    'content-type': fileType,
+    'content-length': fileBuffer.length,
+    'content-disposition': 'inline; filename="' + encodeHeaderFileName(fileName) + '"',
+    'cache-control': 'private, max-age=3600',
+  });
+  res.end(fileBuffer);
+}
+
+function expenseFromRow(row, rowNumber) {
+  return {
+    rowNumber,
+    id: row[0] || '',
+    fechaRecibido: row[1] || '',
+    fechaGasto: row[2] || '',
+    persona: row[3] || '',
+    categoria: row[4] || '',
+    concepto: row[5] || '',
+    mesDestino: row[6] || '',
+    columnaDestino: row[7] || '',
+    filaDestino: Number(row[8] || 0),
+    importe: parseAmount(row[9]),
+    descripcion: row[10] || '',
+    valorAnterior: parseAmount(row[11]),
+    valorNuevo: parseAmount(row[12]),
+    destino: row[13] || '',
+    estado: row[14] || '',
+  };
+}
+
+function receiptFromRow(row) {
+  return {
+    id: row[0] || '',
+    fecha: row[1] || '',
+    persona: row[2] || '',
+    importe: parseAmount(row[3]),
+    descripcion: row[4] || '',
+    archivoNombre: row[5] || '',
+    archivoTipo: row[6] || '',
+    archivoTamano: Number(row[7] || 0),
+    partes: Number(row[8] || 0),
+    archivoUrl: row[0] ? '/api/comprobantes/archivo?id=' + encodeURIComponent(row[0]) : '',
   };
 }
 
@@ -423,6 +554,16 @@ async function ensureLogSheet() {
   if (!exists) {
     await batchUpdate({ requests: [{ addSheet: { properties: { title: LOG_SHEET_NAME } } }] });
     await updateValues("'" + LOG_SHEET_NAME + "'!A1:O1", [LOG_HEADERS]);
+  }
+}
+
+async function ensureReceiptsSheet() {
+  const header = ['id', 'fecha', 'persona', 'importe', 'descripcion', 'archivo_nombre', 'archivo_tipo', 'archivo_tamano', 'partes', 'archivo_base64_partes'];
+  const metadata = await getSpreadsheetMetadata();
+  const exists = metadata.sheets?.some((sheet) => sheet.properties?.title === RECEIPTS_SHEET_NAME);
+  if (!exists) {
+    await batchUpdate({ requests: [{ addSheet: { properties: { title: RECEIPTS_SHEET_NAME } } }] });
+    await updateValues("'" + RECEIPTS_SHEET_NAME + "'!A1:J1", [header]);
   }
 }
 
@@ -521,7 +662,7 @@ async function serveStatic(res, pathname) {
 }
 
 function contentType(filePath) {
-  return { '.html': 'text/html; charset=utf-8', '.css': 'text/css; charset=utf-8', '.js': 'text/javascript; charset=utf-8' }[extname(filePath)] || 'application/octet-stream';
+  return { '.html': 'text/html; charset=utf-8', '.css': 'text/css; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.png': 'image/png', '.pdf': 'application/pdf' }[extname(filePath)] || 'application/octet-stream';
 }
 
 async function readJson(req) {
@@ -549,6 +690,16 @@ function parseAmount(value) {
   const normalized = raw.includes(',') ? raw.replace(/\./g, '').replace(',', '.') : raw.replace(/\./g, '');
   const parsed = Number(normalized);
   return Number.isFinite(parsed) ? parsed : 0;
+}
+
+function chunkText(value, size) {
+  const chunks = [];
+  for (let index = 0; index < value.length; index += size) chunks.push(value.slice(index, index + size));
+  return chunks;
+}
+
+function encodeHeaderFileName(value) {
+  return String(value).replace(/[\"\\\r\n]/g, '_');
 }
 
 function sendJson(res, statusCode, payload) {
