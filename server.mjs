@@ -649,7 +649,7 @@ async function getAccessToken() {
 }
 
 async function serveStatic(res, pathname) {
-  const requestedPath = pathname === '/' ? '/index.html' : pathname;
+  const requestedPath = pathname === '/' ? '/home.html' : pathname;
   const filePath = normalize(join(PUBLIC_DIR, requestedPath));
   if (!filePath.startsWith(PUBLIC_DIR)) return sendJson(res, 403, { error: 'No permitido' });
   try {
