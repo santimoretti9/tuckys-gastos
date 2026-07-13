@@ -4,7 +4,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "start": "node server-pwa.mjs"
+    "start": "node server-tucky.mjs"
   },
   "engines": {
     "node": ">=20"
