@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Cargar gasto Tuckys</title>
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+    <link rel="icon" type="image/png" href="/favicon.png">
+    <link rel="manifest" href="/site.webmanifest">
+    <meta name="theme-color" content="#176b52">
+    <link rel="stylesheet" href="/styles.css">
+  </head>
+  <body>
+    <main class="app-shell">
+      <section class="expense-panel" aria-labelledby="title">
+        <div class="brand-row"><span class="mark">T</span><span>Tuckys</span></div>
+        <div class="page-heading">
+          <p>Carga directa</p>
+          <h1 id="title">Cargar gasto</h1>
+        </div>
+        <p class="helper-text">Selecciona mes, categoria y gasto. Si tenes comprobante, podes adjuntarlo en la misma carga.</p>
+        <form id="expense-form" class="form">
+          <label id="access-code-field" hidden><span>Codigo de acceso</span><input id="codigo_acceso" name="codigo_acceso" autocomplete="off"></label>
+          <label><span>Importe</span><input id="importe" name="importe" inputmode="decimal" autocomplete="off" placeholder="45000" required></label>
+          <label><span>MES</span><select id="mes_columna" name="mes_columna" required></select></label>
+          <label><span>Categoria</span><select id="categoria" name="categoria" required></select></label>
+          <label><span>Gasto</span><select id="concepto" name="concepto" required></select></label>
+          <label><span>Comprobante opcional</span><input id="archivo" name="archivo" type="file" accept="image/*,.pdf"></label>
+          <label><span>Detalle del comprobante</span><textarea id="descripcion_comprobante" name="descripcion_comprobante" placeholder="Ej: factura de luz, julio"></textarea></label>
+          <button id="submit-button" type="submit">Enviar gasto</button>
+        </form>
+        <div id="preview" class="preview" aria-live="polite">Selecciona los datos para ver el destino antes de enviar.</div>
+        <div id="status" class="status" role="status" aria-live="polite"></div>
+      </section>
+      <nav class="bottom-nav" aria-label="Navegacion principal">
+        <a class="active" href="/">Cargar</a>
+        <a href="/historial.html">Historial</a>
+      </nav>
+    </main>
+    <script src="/app-fixed.js"></script>
+  </body>
+</html>
