@@ -4,7 +4,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "start": "node server-tucky-amount.mjs"
+    "start": "node server-tucky-setamount.mjs"
   },
   "engines": {
     "node": ">=20"
