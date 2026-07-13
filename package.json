@@ -4,7 +4,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "start": "node server-tucky-orange.mjs"
+    "start": "node server-tucky-code.mjs"
   },
   "engines": {
     "node": ">=20"
