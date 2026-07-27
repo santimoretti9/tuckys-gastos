@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Cargar gasto Tuckys</title>
+    <title>Cargar movimiento Tuckys</title>
     <link rel="apple-touch-icon" href="/app-icon.svg">
     <link rel="icon" type="image/svg+xml" href="/app-icon.svg">
     <link rel="manifest" href="/site.webmanifest">
@@ -16,11 +16,12 @@
         <div class="brand-row"><span class="mark">T</span><span>Tuckys</span></div>
         <div class="page-heading">
           <p>Carga directa</p>
-          <h1 id="title">Cargar gasto</h1>
+          <h1 id="title">Cargar movimiento</h1>
         </div>
-        <p class="helper-text">Selecciona mes, categoria y gasto. Si tenes comprobante, podes adjuntarlo en la misma carga.</p>
+        <p class="helper-text">Selecciona si es gasto o ingreso, el mes y el concepto. Si tenes comprobante, podes adjuntarlo en la misma carga.</p>
         <form id="expense-form" class="form">
           <label id="access-code-field" hidden><span>Codigo de acceso</span><input id="codigo_acceso" name="codigo_acceso" autocomplete="off"></label>
+          <label><span>Tipo</span><select id="tipo_movimiento" name="tipo_movimiento" required><option value="EGRESOS">Gasto</option><option value="INGRESOS">Ingreso</option></select></label>
           <label><span>Importe</span><input id="importe" name="importe" inputmode="decimal" autocomplete="off" placeholder="45000" required></label>
           <label><span>MES</span><select id="mes_columna" name="mes_columna" required></select></label>
           <label><span>Categoria</span><select id="categoria" name="categoria" required></select></label>
@@ -37,6 +38,6 @@
         <a href="/historial.html">Historial</a>
       </nav>
     </main>
-    <script src="/app-tucky.js"></script>
+    <script src="/app-income.js"></script>
   </body>
 </html>
